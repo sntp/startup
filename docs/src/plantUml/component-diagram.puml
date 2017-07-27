@@ -1,0 +1,67 @@
+@startuml
+title Startup components diagram
+
+folder Startup {
+    package Controllers {
+        [User controller] as UserController
+        [Vocabulary controller] as VocabularyController
+        [Dictionary controller] as DictionaryController
+        [Subtitles controller] as SubtitlesController
+    }
+
+    package Services {
+        [User service] as UserService
+        [Vocabulary service] as VocabularyService
+        [Dictionary service] as DictionaryService
+        [Subtitles service] as SubtitlesService
+    }
+
+    package Integration {
+        [OpenSubtitles client] as OpenSubtitlesClient
+        [YouTube client] as YouTubeClient
+        [ABBYY client] as ABBYYClient
+    }
+
+    package Repositories {
+        [User repository] as UserRepository
+        [Vocabulary repository] as VocabularyRepository
+        [Dictionary repository] as DictionaryRepository
+        [Subtitles repository] as SubtitlesRepository
+    }
+
+    UserController -r-> UserService
+    VocabularyController -r-> VocabularyService
+    DictionaryController -r-> DictionaryService
+    SubtitlesController -r-> SubtitlesService
+
+    UserService -d-> UserRepository
+    VocabularyService -d-> VocabularyRepository
+    DictionaryService -d-> DictionaryRepository
+    SubtitlesService -d-> SubtitlesRepository
+
+    UserRepository -r-> Database
+    VocabularyRepository -r-> Database
+    SubtitlesRepository -r-> Database
+    DictionaryRepository -r-> Database
+    DictionaryRepository -d-> OpenSubtitlesClient
+    DictionaryRepository -d-> YouTubeClient
+    DictionaryRepository -d-> ABBYYClient
+
+    OpenSubtitlesClient -d-> OpenSubtitles
+    YouTubeClient -d-> YouTube
+    ABBYYClient -d-> ABBYY
+}
+
+cloud OpenSubtitles {
+}
+
+cloud YouTube {
+}
+
+cloud ABBYY {
+}
+
+database PostgreSQL as Database {
+
+}
+@enduml
