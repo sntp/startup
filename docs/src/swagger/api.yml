@@ -1,5 +1,611 @@
-swagger: '2.0'
+swagger: 2.0
 info:
-  version: '0.1'
-  title: 'startup'
-  description: 'Tool to create vocabulary lists'
+  version: 0.1
+  title: startup
+  description: Tool to create vocabulary lists
+schemes:
+- https
+consumes:
+- application/json
+tags:
+- name: vocabulary
+  description: API for working with vocabularies
+- name: user
+  description: API for working with users
+- name: subtitles
+  description: API for adding subtitles from different sources
+- name: dictionary
+  description: API from getting translations
+paths:
+  /vocabulary:
+    get:
+      summary: Returns a list of vocabularies
+      description: If mineOnly=false return only published
+        vocabularies, return all vocabularies otherwise
+      tags:
+      - vocabulary
+      produces:
+      - application/json
+      parameters:
+      - name: offset
+        in: query
+        description: Offset for result list
+        default: 0
+        type: integer
+      - name: limit
+        in: query
+        description: Number of items in response
+        default: 30
+        type: integer
+      - name: query
+        in: query
+        type: string
+        description: String to provide search in titles
+      - name: mineOnly
+        in: query
+        type: boolean
+        default: false
+        description: Show only vocabularies created by current user
+      responses:
+        '200':
+          description: A list of vocabularies.
+          schema:
+            $ref: '#/definitions/Vocabularies'
+        '403':
+          description: If mineOnly=true and user not authorized
+    post:
+      summary: Create vocabulary
+      tags:
+      - vocabulary
+      parameters:
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/VocabularyPost'
+      responses:
+        200:
+          description: OK
+        400:
+          description: In case of wrong request
+        401:
+          description: If user unauthorized
+    put:
+      summary: Edit vocabulary
+      tags:
+      - vocabulary
+      parameters:
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/VocabularyPut'
+      responses:
+        '200':
+          description: OK
+  /vocabulary/{id}:
+    get:
+      summary: Returns vocabulary by id
+      tags:
+      - vocabulary
+      parameters:
+      - name: id
+        in: path
+        description: ID of vocabulary
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: A list of words
+          schema:
+            $ref: '#/definitions/Vocabulary'
+    delete:
+      summary: Delete vocabulary
+      tags:
+      - vocabulary
+      parameters:
+      - name: id
+        in: path
+        description: ID of vocabulary
+        required: true
+        type: integer
+      responses:
+        200:
+          description: OK
+  /vocabulary/{id}/save:
+    get:
+      summary: Save ANKI file
+      tags:
+      - vocabulary
+      parameters:
+      - name: id
+        in: path
+        description: ID of vocabulary
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: Anki file
+  /subtitles:
+    post:
+      summary: Add subtitles from Opensubtitles or YouTube
+      tags:
+      - subtitles
+      parameters:
+      - name: body
+        in: body
+        schema:
+          $ref: '#/definitions/SubtitlesPost'
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/Subtitles'
+  /subtitles/{id}:
+    get:
+      summary: Returns subtitles by id
+      tags:
+      - subtitles
+      parameters:
+      - name: id
+        in: path
+        description: ID of subtitles
+        required: true
+        type: integer
+      responses:
+        '200':
+          description: subtitle-like format
+          schema:
+            $ref: '#/definitions/Subtitles'
+  /dictionary/{srcLang}/{dstLang}/{text}:
+    get:
+      summary: translate word or phrase
+      tags:
+      - dictionary
+      parameters:
+      - name: srcLang
+        in: path
+        type: string
+        required: true
+      - name: dstLang
+        in: path
+        type: string
+        required: true
+      - name: text
+        in: path
+        type: string
+        required: true
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/DictionaryEntry'
+  /user/{login}:
+    get:
+      summary: Get user info
+      tags:
+      - user
+      parameters:
+      - name: login
+        in: path
+        type: string
+        required: true
+      responses:
+        '200':
+          description: OK
+          schema:
+            $ref: '#/definitions/User'
+    delete:
+      summary: Delete user
+      tags:
+      - user
+      parameters:
+      - name: login
+        in: path
+        type: string
+        required: true
+      responses:
+        '200':
+          description: OK
+  /user:
+    post:
+      summary: Create user
+      tags:
+        - user
+      parameters:
+        - name: body
+          in: body
+          schema:
+            $ref: '#/definitions/UserPost'
+      responses:
+        '200':
+          description: OK
+    put:
+      summary: Edit user
+      tags:
+        - user
+      parameters:
+        - name: body
+          in: body
+          schema:
+            $ref: '#/definitions/UserPut'
+      responses:
+        '200':
+          description: OK
+definitions:
+  Vocabularies:
+    description: Response for search
+    type: object
+    properties:
+      limit:
+        type: integer
+        example: 0
+      offset:
+        type: integer
+        example: 30
+      count:
+        description: Overall number of vocabularies satisfying serch criteria
+        type: integer
+        example: 42
+      vocabularies:
+        description: List of briefly vocabulary information
+        type: array
+        items:
+          $ref: '#/definitions/VocabularyShort'
+  VocabularyShort:
+    description: Short info for search
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 15324
+      title:
+        type: string
+        example: Inception 2010 Advanced
+      rating:
+        description: average 5-point rating
+        type: number
+        example: 4.8
+      created:
+        type: integer
+        description: timestamp
+        example: 1500926232
+      words:
+        description: Number of words in this vocabulary
+        type: integer
+        example: 30
+  Vocabulary:
+    description: Represents full vocabulary info
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 15324
+      title:
+        type: string
+        example: Inception 2010 Advanced
+      description:
+        type: string
+        example: Top 30 useful words
+      created:
+        description: timestamp when vocabulary was created
+        type: integer
+        example: 1500926232
+      modified:
+        description: timestamp when vocabulary was modified for the last time
+        type: integer
+        example: 1501039483
+      rating:
+        description: average 5-point rating
+        type: number
+        example: 4.8
+      author:
+        $ref: '#/definitions/UserShort'
+      source:
+        $ref: '#/definitions/ContentSource'
+      srcLang:
+        description: Language of subtitles
+        type: string
+        example: EN
+      dstLang:
+        description: Language of vocabulary
+        type: string
+        example: RU
+      words:
+        type: array
+        items:
+          $ref: '#/definitions/Word'
+  VocabularyPost:
+    description: Entity for create vocatulary
+    properties:
+      title:
+        type: string
+        example: Inception 2010 Advanced
+      description:
+        type: string
+        example: Top 30 useful words
+      sourceId:
+        type: integer
+        example: 45
+      srcLang:
+        description: Language of subtitles
+        type: string
+        example: EN
+      dstLang:
+        description: Language of vocabulary
+        type: string
+        example: RU
+      words:
+        type: array
+        items:
+          $ref: '#/definitions/WordPost'
+  VocabularyPut:
+    description: Entity for update vocabulary
+    properties:
+      id:
+        description: ID of vocabulary to be updated
+        type: integer
+        example: 15324
+      title:
+        type: string
+        example: Inception 2010 Advanced
+      description:
+        type: string
+        example: Top 30 useful words
+      srcLang:
+        description: Language of subtitles
+        type: string
+        example: EN
+      dstLang:
+        description: Language of vocabulary
+        type: string
+        example: RU
+      words:
+        type: array
+        items:
+          $ref: '#/definitions/WordPut'
+  ContentSource:
+    description: Respresents subtitles source
+    properties:
+      id:
+        type: integer
+        example: 53
+      type:
+        type: string
+        enum:
+        - OpenSubtitles
+        - Youtube
+        example: OpenSubtitles
+      url:
+        type: string
+        example: https://www.opensubtitles.org/en/subtitles/7047679/game-of-thrones-stormborn-en
+  Word:
+    description: Represents a word in vocabulary
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 26534
+      vocabularyId:
+        type: integer
+        example: 345
+      word:
+        type: string
+        example: give up
+      translation:
+        type: string
+        example: сдаваться
+      context:
+        $ref: '#/definitions/WordContext'
+  WordPut:
+    description: Represents an entity for editing word
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 432134
+      vocabularyId:
+        type: integer
+        example: 345
+      word:
+        type: string
+        example: win
+      translation:
+        type: string
+        example: победить
+      context:
+        $ref: '#/definitions/WordContext'
+  WordPost:
+    description: Entity for adding a word
+    type: object
+    properties:
+      vocabularyId:
+        type: integer
+        example: 345
+      lineId:
+        type: integer
+        example: 912384
+      word:
+        type: string
+        example: win
+      translation:
+        type: string
+        example: победить
+      contextText:
+        type: string
+        example: djfklasjflksdjf win dfdfsf
+      contextIndexes:
+        type: array
+        items:
+          type: integer
+        example: [1]
+  WordContext:
+    description: Represents context in which word was occured
+    type: object
+    properties:
+      text:
+        type: string
+        example: djfklasjflksdjf win dfdfsf
+      indexes:
+        type: array
+        items:
+          type: integer
+        example: [1]
+  SubtitlesPost:
+    description: Entity for adding subtitles
+    type: object
+    properties:
+      type:
+        type: string
+        enum:
+        - OpenSubtitles
+        - YouTube
+        example: OpenSubtitles
+      url:
+        type: string
+        example: https://www.opensubtitles.org/en/subtitles/7047679/game-of-thrones-stormborn-en
+      lang:
+        type: string
+        example: EN
+  Subtitles:
+    description: Represents subtitles
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 1324
+      title:
+        type: string
+        example: Game of Thrones subtitles S07E02
+      type:
+        type: string
+        enum:
+        - OpenSubtitles
+        - YouTube
+        example: OpenSubtitles
+      url:
+        type: string
+        example: https://www.opensubtitles.org/en/subtitles/7047679/game-of-thrones-stormborn-en
+      lang:
+        type: string
+        example: EN
+      lines:
+        type: array
+        items:
+          $ref: '#/definitions/Line'
+  Line:
+    description: Represents line in subtitles
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 3676347
+      subtitlesId:
+        type: integer
+        example: 42
+      text:
+        type: string
+        example: I won't return to King's Landing until I have that for you.
+      startTime:
+        description: miliseconds
+        type: integer
+        example: 2678
+      endTime:
+        description: miliseconds
+        type: integer
+        example: 2899
+  DictionaryEntry:
+    description: Represents dictionary entry
+    type: object
+    properties:
+      source:
+        description: Dictionary name
+        type: string
+        enum:
+        - ABBYY
+        example: ABBYY
+      word:
+        type: string
+        example: win
+      translations:
+        type: array
+        items:
+          type: string
+        example: [победа, победить, выиграть, достичь]
+      srcLang:
+        type: string
+        example: EN
+      dstLang:
+        type: string
+        example: RU
+  User:
+    description: Represents user entoty
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 543
+      login:
+        type: string
+        example: sntp
+      name:
+        type: string
+        example: Carl Ivanec
+      nativeLang:
+        type: string
+        example: RU
+      learningLang:
+        type: string
+        example: EN
+  UserPost:
+    description: Entity for creating user
+    type: object
+    properties:
+      login:
+        type: string
+        example: sntp
+      name:
+        type: string
+        example: Jon Petrov
+      password:
+        type: string
+        example: qwerty
+      nativeLang:
+        type: string
+        example: RU
+      learningLang:
+        type: string
+        example: EN
+  UserPut:
+    description: Entity for update user
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 13123
+      login:
+        type: string
+        example: sntp
+      name:
+        type: string
+        example: Roma Romov
+      nativeLang:
+        type: string
+        example: RU
+      learningLang:
+        type: string
+        example: EN
+      currentPassword:
+        type: string
+        example: qwerty
+      newPasword:
+        type: string
+        example: Super-$tronk_passw0rd!
+  UserShort:
+    description: Entity to display briefly user info
+    type: object
+    properties:
+      id:
+        type: integer
+        example: 5434
+      name:
+        type: string
+        example: Jo Jo
