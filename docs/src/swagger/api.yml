@@ -1,0 +1,5 @@
+swagger: '2.0'
+info:
+  version: '0.1'
+  title: 'startup'
+  description: 'Tool to create vocabulary lists'
